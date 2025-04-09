@@ -185,6 +185,16 @@ def send_message():
         elif data.get("recipient_id"):
             message["recipient_id"] = ObjectId(data["recipient_id"])
             message["type"] = "private"
+            recipient_id = data["recipient_id"]
+            if not any(f["friend_id"] == recipient_id for f in user.get("friends", [])):
+                users_col.update_one(
+                    {"_id": user["_id"]},
+                    {"$push": {"friends": {"friend_id": recipient_id}}}
+                )
+                users_col.update_one(
+                    {"_id": ObjectId(recipient_id)},
+                    {"$push": {"friends": {"friend_id": str(user["_id"])}}}
+                )
         else:
             return jsonify({"error": "Recipient or group ID required"}), 400
 
